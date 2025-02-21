@@ -18,8 +18,6 @@ env:
   DATABASE_URL: postgres://moncomptepro:moncomptepro@127.0.0.1:5432/moncomptepro
   DEBOUNCE_API_KEY: ${{ secrets.DEBOUNCE_API_KEY }}
   FEATURE_SEND_MAIL: "True"
-  INSEE_CONSUMER_KEY: ${{ secrets.INSEE_CONSUMER_KEY }}
-  INSEE_CONSUMER_SECRET: ${{ secrets.INSEE_CONSUMER_SECRET }}
   HOST: http://172.18.0.1:3000
   ZAMMAD_TOKEN: ${{ secrets.ZAMMAD_TOKEN }}
 jobs:

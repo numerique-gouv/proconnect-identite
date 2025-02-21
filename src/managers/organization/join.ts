@@ -1,7 +1,12 @@
 import { isEmailValid } from "@gouvfr-lasuite/proconnect.core/security";
 import { getEmailDomain } from "@gouvfr-lasuite/proconnect.core/services/email";
 import { Welcome } from "@gouvfr-lasuite/proconnect.email";
-import { NotFoundError } from "@gouvfr-lasuite/proconnect.identite/errors";
+import { EntrepriseApiError } from "@gouvfr-lasuite/proconnect.entreprise/types";
+import {
+  InseeNotActiveError,
+  InvalidSiretError,
+  NotFoundError,
+} from "@gouvfr-lasuite/proconnect.identite/errors";
 import { forceJoinOrganizationFactory } from "@gouvfr-lasuite/proconnect.identite/managers/organization";
 import type {
   Organization,
@@ -17,9 +22,6 @@ import {
   MAX_SUGGESTED_ORGANIZATIONS,
 } from "../../config/env";
 import {
-  InseeConnectionError,
-  InseeNotActiveError,
-  InvalidSiretError,
   UnableToAutoJoinOrganizationError,
   UserAlreadyAskedToJoinOrganizationError,
   UserInOrganizationAlreadyError,
@@ -128,11 +130,11 @@ export const joinOrganization = async ({
   try {
     organizationInfo = await getOrganizationInfo(siret);
   } catch (error) {
-    if (error instanceof InseeConnectionError) {
+    if (error instanceof EntrepriseApiError) {
       throw error;
     }
 
-    throw new InvalidSiretError();
+    throw new InvalidSiretError("", { cause: error });
   }
   let organization = await upsert({
     siret,

@@ -1,8 +1,10 @@
-import { NotFoundError } from "@gouvfr-lasuite/proconnect.identite/errors";
+import {
+  InvalidSiretError,
+  NotFoundError,
+} from "@gouvfr-lasuite/proconnect.identite/errors";
 import type { NextFunction, Request, Response } from "express";
 import HttpErrors from "http-errors";
 import { z, ZodError } from "zod";
-import { InseeConnectionError, InseeNotFoundError } from "../config/errors";
 import notificationMessages from "../config/notification-messages";
 import { getOrganizationInfo } from "../connectors/api-sirene";
 import { sendModerationProcessedEmail } from "../managers/moderation";
@@ -47,11 +49,7 @@ export const getOrganizationInfoController = async (
 
     return res.json({ organizationInfo });
   } catch (e) {
-    if (e instanceof InseeNotFoundError) {
-      return next(new HttpErrors.NotFound());
-    }
-
-    if (e instanceof ZodError) {
+    if (e instanceof InvalidSiretError) {
       return next(
         new HttpErrors.BadRequest(
           notificationMessages["invalid_siret"].description,
@@ -59,10 +57,14 @@ export const getOrganizationInfoController = async (
       );
     }
 
-    if (e instanceof InseeConnectionError) {
+    if (e instanceof NotFoundError) {
+      return next(new HttpErrors.NotFound());
+    }
+
+    if (e instanceof ZodError) {
       return next(
-        new HttpErrors.GatewayTimeout(
-          notificationMessages["insee_unexpected_error"].description,
+        new HttpErrors.BadRequest(
+          notificationMessages["invalid_siret"].description,
         ),
       );
     }
@@ -101,7 +103,6 @@ export const postForceJoinOrganizationController = async (
 
     return res.json({});
   } catch (e) {
-    logger.error(e);
     if (e instanceof ZodError) {
       return next(new HttpErrors.BadRequest());
     }
