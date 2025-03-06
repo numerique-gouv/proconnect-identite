@@ -1,13 +1,17 @@
 import { getTrustedReferrerPath } from "@gouvfr-lasuite/proconnect.core/security";
+import { NotFoundError } from "@gouvfr-lasuite/proconnect.identite/errors";
 import type { NextFunction, Request, Response } from "express";
 import HttpErrors from "http-errors";
 import { isEmpty } from "lodash-es";
-import { HOST } from "../config/env";
+import assert from "node:assert";
+import { match } from "ts-pattern";
+import { FEATURE_CONSIDER_ALL_USERS_AS_CERTIFIED, HOST } from "../config/env";
 import { UserNotFoundError } from "../config/errors";
 import { is2FACapable, shouldForce2faForUser } from "../managers/2fa";
 import { isBrowserTrustedForUser } from "../managers/browser-authentication";
 import { greetForJoiningOrganization } from "../managers/organization/join";
 import {
+  getOrganizationById,
   getOrganizationsByUserId,
   selectOrganization,
 } from "../managers/organization/main";
@@ -18,12 +22,17 @@ import {
   isWithinAuthenticatedSession,
   isWithinTwoFactorAuthenticatedSession,
 } from "../managers/session/authenticated";
+import { CertificationSessionSchema } from "../managers/session/certification";
 import {
   getEmailFromUnauthenticatedSession,
   getPartialUserFromUnauthenticatedSession,
 } from "../managers/session/unauthenticated";
-import { needsEmailVerificationRenewal } from "../managers/user";
+import {
+  isUserVerifiedWithFranceconnect,
+  needsEmailVerificationRenewal,
+} from "../managers/user";
 import { getSelectedOrganizationId } from "../repositories/redis/selected-organization";
+import { isEntrepriseUnipersonnelle } from "../services/organization";
 import { usesAuthHeaders } from "../services/uses-auth-headers";
 
 const getReferrerPath = (req: Request) => {
@@ -158,10 +167,12 @@ export const checkUserTwoFactorAuthMiddleware = async (
         if (!(await is2FACapable(user_id))) {
           // We break the connexion flow
 
+          req.session.authForProconnectFederation = undefined;
           req.session.interactionId = undefined;
           req.session.mustReturnOneOrganizationInPayload = undefined;
+          req.session.passCertificationPage = undefined;
           req.session.twoFactorsAuthRequested = undefined;
-          req.session.authForProconnectFederation = undefined;
+
           return res.redirect(
             "/connection-and-account?notification=2fa_not_configured",
           );
@@ -227,7 +238,7 @@ export const checkUserIsVerifiedMiddleware = (
     }
   });
 
-export const checkUserHasPersonalInformationsMiddleware = (
+export const checkUserNeedCertificationDirigeantMiddleware = (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -235,7 +246,32 @@ export const checkUserHasPersonalInformationsMiddleware = (
   checkUserIsVerifiedMiddleware(req, res, async (error) => {
     try {
       if (error) return next(error);
+      if (FEATURE_CONSIDER_ALL_USERS_AS_CERTIFIED) return next();
 
+      const {
+        certificationDirigeantRequested: isRequested,
+        passCertificationPage,
+      } = await CertificationSessionSchema.parseAsync(req.session);
+      if (!isRequested) return next();
+
+      const { id: userId } = getUserFromAuthenticatedSession(req);
+      const isVerified = await isUserVerifiedWithFranceconnect(userId);
+      if (isVerified && passCertificationPage) return next();
+
+      return res.redirect("/users/certification-dirigeant");
+    } catch (error) {
+      next(error);
+    }
+  });
+
+export const checkUserHasPersonalInformationsMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) =>
+  checkUserNeedCertificationDirigeantMiddleware(req, res, async (error) => {
+    try {
+      if (error) return next(error);
       const { given_name, family_name, job } =
         getUserFromAuthenticatedSession(req);
       if (isEmpty(given_name) || isEmpty(family_name) || isEmpty(job)) {
@@ -342,6 +378,13 @@ export const checkUserHasSelectedAnOrganizationMiddleware = (
       );
 
       if (
+        req.session.certificationDirigeantRequested &&
+        !selectedOrganizationId
+      ) {
+        return res.redirect("/users/select-organization");
+      }
+
+      if (
         req.session.mustReturnOneOrganizationInPayload &&
         !selectedOrganizationId
       ) {
@@ -364,6 +407,54 @@ export const checkUserHasSelectedAnOrganizationMiddleware = (
       next(error);
     }
   });
+
+export function checkUserWantToRepresentAnOrganization(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  return checkUserHasSelectedAnOrganizationMiddleware(
+    req,
+    res,
+    async (error) => {
+      try {
+        if (error) return next(error);
+
+        console.log(" -> checkUserWantToRepresentOrganization");
+        console.trace();
+        const { id: userId } = getUserFromAuthenticatedSession(req);
+        const selectedOrganizationId = await getSelectedOrganizationId(userId);
+        assert.ok(selectedOrganizationId);
+
+        const organization = await getOrganizationById(selectedOrganizationId);
+        if (isEmpty(organization)) {
+          throw new NotFoundError("Organization not found");
+        }
+
+        console.log({
+          isEntrepriseUnipersonnelle: isEntrepriseUnipersonnelle(organization),
+        });
+        console.trace();
+
+        match({
+          isEntrepriseUnipersonnelle: isEntrepriseUnipersonnelle(organization),
+        });
+
+        next();
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+}
+
+// export function checkUserWantToJoinOrganizationAsExecutive(
+//   req: Request,
+//   res: Response,
+//   next: NextFunction,
+// ) {
+//   return;
+// }
 
 export const checkUserHasNoPendingOfficialContactEmailVerificationMiddleware = (
   req: Request,
@@ -429,6 +520,23 @@ export const checkUserHasBeenGreetedForJoiningOrganizationMiddleware = (
         );
 
         let organizationThatNeedsGreetings;
+        // if (req.session.certificationDirigeantRequested && req.session.passCertificationPage) {
+
+        //   const selectedOrganizationId = await getSelectedOrganizationId(
+        //     getUserFromAuthenticatedSession(req).id,
+        //   );
+
+        //   organizationThatNeedsGreetings = userOrganisations.find(
+        //     ({ id, has_been_greeted }) =>
+        //       !has_been_greeted && id === selectedOrganizationId,
+        //   );
+
+        //   console.dir({ session: req.session, organizationThatNeedsGreetings,selectedOrganizationId, userOrganisations });
+        //   console.trace();
+        //   return res.redirect(`/users/welcome`);
+
+        // }
+
         if (req.session.mustReturnOneOrganizationInPayload) {
           const selectedOrganizationId = await getSelectedOrganizationId(
             getUserFromAuthenticatedSession(req).id,
