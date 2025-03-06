@@ -1,7 +1,7 @@
 //
 
 import { createEntrepriseOpenApiClient } from "#src/client";
-import { coolTrackingParams } from "#src/testing";
+import { coolTrackingParams } from "#testing";
 import { mock, suite, test } from "node:test";
 import { findBySiretFactory } from "./find-by-siret.js";
 
