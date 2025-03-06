@@ -27,6 +27,8 @@ export async function postFranceConnectController(
     const { nonce, state } = createOidcChecks();
     req.session.nonce = nonce;
     req.session.state = state;
+    req.session.redirectTo =
+      "/personal-information?notification=personal_information_update_via_franceconnect_success";
 
     const url = await getFranceConnectRedirectUrl(nonce, state);
 
@@ -53,28 +55,32 @@ export async function getFranceConnectOidcCallbackController(
       throw new OidcError(error, error_description);
     }
     const { code } = await z.object({ code: z.string() }).parseAsync(req.query);
+    console.log({ code });
+    console.trace();
 
-    const { nonce, state } = await FranceConnectOidcSessionSchema.parseAsync(
-      req.session,
-    );
+    const { nonce, state, redirectTo } =
+      await FranceConnectOidcSessionSchema.parseAsync(req.session);
     const franceconnectUserInfo = await getFranceConnectUser({
       code,
       currentUrl: `${HOST}${FRANCECONNECT_CALLBACK_URL}${req.url.substring(req.path.length)}`,
       expectedNonce: nonce,
       expectedState: state,
     });
+    console.log({ franceconnectUserInfo, redirectTo });
+    console.trace();
 
-    const { id: user_id } = getUserFromAuthenticatedSession(req);
+    const { id: userId } = getUserFromAuthenticatedSession(req);
 
     const updatedUser = await updateFranceConnectUserInfo(
-      user_id,
+      userId,
       franceconnectUserInfo,
     );
     updateUserInAuthenticatedSession(req, updatedUser);
 
-    return res.redirect(
-      "/personal-information?notification=personal_information_update_via_franceconnect_success",
-    );
+    console.log({ updatedUser, userId });
+    console.trace();
+
+    return res.redirect(redirectTo);
   } catch (error) {
     next(error);
   }
