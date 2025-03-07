@@ -257,7 +257,9 @@ export const isIdentityConsistencyChecked = async (req: Request) => {
     throw new NotFoundError("link should be set");
   }
 
-  return [
+  const askForExecutiveCertification =
+    req.session.certificationDirigeantRequested;
+  const hasValidVerificationType = [
     "code_sent_to_official_contact_email",
     "domain",
     "imported_from_inclusion_connect",
@@ -266,6 +268,22 @@ export const isIdentityConsistencyChecked = async (req: Request) => {
     "official_contact_email",
     "bypassed",
   ].includes(link?.verification_type ?? "");
+
+  return match({
+    isOrganizationExecutive: link.is_executive,
+    askForExecutiveCertification,
+    hasValidVerificationType,
+  })
+    .with(
+      {
+        askForExecutiveCertification: true,
+        isOrganizationExecutive: true,
+        hasValidVerificationType: true,
+      },
+      () => true,
+    )
+    .with({ hasValidVerificationType: true }, () => true)
+    .otherwise(() => false);
 };
 
 export async function getCurrentAcr(req: Request) {
