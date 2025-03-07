@@ -32,8 +32,6 @@ export async function postCertificationDirigeantController(
     req.session.nonce = nonce;
     req.session.state = state;
     req.session.redirectTo = "/users/certification-dirigeant";
-    console.dir(req.session, { depth: null });
-    console.trace();
     const url = await getFranceConnectRedirectUrl(nonce, state);
 
     return res.redirect(url.toString());

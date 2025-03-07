@@ -8,6 +8,7 @@ import { is2FACapable, shouldForce2faForUser } from "../managers/2fa";
 import { isBrowserTrustedForUser } from "../managers/browser-authentication";
 import { greetForJoiningOrganization } from "../managers/organization/join";
 import {
+  getCertifiedOrganizationsByUserId,
   getOrganizationsByUserId,
   selectOrganization,
 } from "../managers/organization/main";
@@ -366,14 +367,20 @@ export const checkUserHasSelectedAnOrganizationMiddleware = (
 
       const userId = getUserFromAuthenticatedSession(req).id;
       const selectedOrganizationId = await getSelectedOrganizationId(userId);
-      const { mustReturnOneOrganizationInPayload } = req.session;
+      const {
+        mustReturnOneOrganizationInPayload,
+        certificationDirigeantRequested,
+      } = req.session;
 
       if (selectedOrganizationId || !mustReturnOneOrganizationInPayload) {
         // If already has a selected org or doesn't need one in payload, proceed
         return next();
       }
 
-      const userOrganizations = await getOrganizationsByUserId(userId);
+      const userOrganizations = certificationDirigeantRequested
+        ? await getCertifiedOrganizationsByUserId(userId)
+        : await getOrganizationsByUserId(userId);
+
       if (userOrganizations.length === 1) {
         // If user has exactly one org, auto-select it
         await selectOrganization({

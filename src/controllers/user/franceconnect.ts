@@ -55,8 +55,6 @@ export async function getFranceConnectOidcCallbackController(
       throw new OidcError(error, error_description);
     }
     const { code } = await z.object({ code: z.string() }).parseAsync(req.query);
-    console.log({ code });
-    console.trace();
 
     const { nonce, state, redirectTo } =
       await FranceConnectOidcSessionSchema.parseAsync(req.session);
@@ -66,8 +64,6 @@ export async function getFranceConnectOidcCallbackController(
       expectedNonce: nonce,
       expectedState: state,
     });
-    console.log({ franceconnectUserInfo, redirectTo });
-    console.trace();
 
     const { id: userId } = getUserFromAuthenticatedSession(req);
 
@@ -76,9 +72,6 @@ export async function getFranceConnectOidcCallbackController(
       franceconnectUserInfo,
     );
     updateUserInAuthenticatedSession(req, updatedUser);
-
-    console.log({ updatedUser, userId });
-    console.trace();
 
     return res.redirect(redirectTo);
   } catch (error) {

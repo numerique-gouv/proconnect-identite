@@ -246,6 +246,7 @@ export const isIdentityConsistencyChecked = async (req: Request) => {
 
   const user = getUserFromAuthenticatedSession(req);
   const selectedOrganizationId = await getSelectedOrganizationId(user.id);
+  console.log({ selectedOrganizationId });
 
   if (selectedOrganizationId === null) {
     throw new Error("selectedOrganizationId should be set");
@@ -257,8 +258,9 @@ export const isIdentityConsistencyChecked = async (req: Request) => {
     throw new NotFoundError("link should be set");
   }
 
-  const askForExecutiveCertification =
-    req.session.certificationDirigeantRequested;
+  const askForExecutiveCertification = Boolean(
+    req.session.certificationDirigeantRequested,
+  );
   const hasValidVerificationType = [
     "code_sent_to_official_contact_email",
     "domain",
@@ -269,21 +271,28 @@ export const isIdentityConsistencyChecked = async (req: Request) => {
     "bypassed",
   ].includes(link?.verification_type ?? "");
 
+  console.dir({ link }, { depth: null });
+  console.log({
+    isOrganizationExecutive: link.is_executive,
+    askForExecutiveCertification,
+    hasValidVerificationType,
+  });
+  console.trace();
+
   return match({
     isOrganizationExecutive: link.is_executive,
     askForExecutiveCertification,
     hasValidVerificationType,
   })
+    .with({ hasValidVerificationType: false }, () => false)
     .with(
       {
         askForExecutiveCertification: true,
-        isOrganizationExecutive: true,
-        hasValidVerificationType: true,
+        isOrganizationExecutive: false,
       },
-      () => true,
+      () => false,
     )
-    .with({ hasValidVerificationType: true }, () => true)
-    .otherwise(() => false);
+    .otherwise(() => true);
 };
 
 export async function getCurrentAcr(req: Request) {
@@ -298,7 +307,7 @@ export async function getCurrentAcr(req: Request) {
     isWithinTwoFactorAuthentication,
   })
     .with(
-      { certificationDirigeantRequested: true },
+      { isConsistencyChecked: true, certificationDirigeantRequested: true },
       () => ACR_VALUE_FOR_CERTIFICATION_DIRIGEANT,
     )
     .with(

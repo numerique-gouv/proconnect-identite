@@ -2,15 +2,29 @@ INSERT INTO users
 (id, email, email_verified, email_verified_at, encrypted_password, created_at, updated_at,
  given_name, family_name, phone_number, job, encrypted_totp_key, totp_key_verified_at, force_2fa)
 VALUES
-  (1, 'single+certification-dirigeant@yopmail.com', true, CURRENT_TIMESTAMP,
+  (1, 'certified-single-organization+certification-dirigeant@yopmail.com', true, CURRENT_TIMESTAMP,
    '$2a$10$kzY3LINL6..50Fy9shWCcuNlRfYq0ft5lS.KCcJ5PzrhlWfKK4NIO', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
-   'Jean', 'Un', '0123456789', 'Single Dirigeant',
+   'Jean', 'Un', '0123456789', 'Certified Single Dirigeant',
    null, null, false),
-  (2, 'bi+certification-dirigeant@yopmail.com', true, CURRENT_TIMESTAMP,
+  (2, 'franceconnected-single-organization+certification-dirigeant@yopmail.com', true, CURRENT_TIMESTAMP,
    '$2a$10$kzY3LINL6..50Fy9shWCcuNlRfYq0ft5lS.KCcJ5PzrhlWfKK4NIO', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
-   'Jean', 'Deux', '0123456789', 'Bi Dirigeant',
+   'Jean', 'Deux', '0123456789', 'FranceConnect-ed Single Dirigeant',
+   null, null, false),
+  (3, 'franceconnected-bi-organization+certification-dirigeant@yopmail.com', true, CURRENT_TIMESTAMP,
+   '$2a$10$kzY3LINL6..50Fy9shWCcuNlRfYq0ft5lS.KCcJ5PzrhlWfKK4NIO', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
+   'Jean', 'Trois', '0123456789', 'FranceConnect-ed Two Dirigeant',
+   null, null, false),
+  (4, 'bi+certification-dirigeant@yopmail.com', true, CURRENT_TIMESTAMP,
+   '$2a$10$kzY3LINL6..50Fy9shWCcuNlRfYq0ft5lS.KCcJ5PzrhlWfKK4NIO', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
+   'Jean', 'Deux', '0123456789', 'Two Dirigeant',
    null, null, false)
 ;
+
+INSERT INTO franceconnect_userinfo
+  (user_id)
+VALUES
+  (1),
+  (2);
 
 INSERT INTO organizations
   (id, siret, created_at, updated_at)
@@ -20,11 +34,11 @@ VALUES
 ;
 
 INSERT INTO users_organizations
-  (user_id, organization_id, is_external, verification_type, has_been_greeted)
+  (user_id, organization_id, is_external, is_executive, verification_type, has_been_greeted)
 VALUES
-  (1, 1, false, 'domain', true),
-  (2, 1, false, 'domain', true),
-  (2, 2, false, 'domain', true);
+  (1, 1, false, true, 'domain', true),
+  (2, 1, false, false, 'domain', true),
+  (2, 2, false, false, 'domain', true);
 ;
 
 INSERT INTO oidc_clients

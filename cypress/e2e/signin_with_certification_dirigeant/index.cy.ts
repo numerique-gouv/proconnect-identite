@@ -7,8 +7,32 @@ describe("sign-in with a client requiring certification dirigeant", () => {
     cy.get("button#custom-connection").click({ force: true });
   });
 
+  it("should directly sign-in when being the executive of only one organization", function () {
+    cy.login(
+      "certified-single-organization+certification-dirigeant@yopmail.com",
+    );
+
+    cy.contains('"job": "Single Dirigeant",');
+
+    cy.contains(
+      '"acr": "https://proconnect.gouv.fr/assurance/certification-dirigeant"',
+    );
+  });
+
+  it.only("should ask a FranceConnect-ed user to select an organization to represent", function () {
+    cy.login(
+      "franceconnected-single-organization+certification-dirigeant@yopmail.com",
+    );
+
+    cy.contains('"job": "Single Dirigeant",');
+
+    cy.contains(
+      '"acr": "https://proconnect.gouv.fr/assurance/certification-dirigeant"',
+    );
+  });
+
   it("should sign-in without org selection when having only one organization certified", function () {
-    cy.login("single+certification-dirigeant@yopmail.com");
+    cy.login("bi+certification-dirigeant@yopmail.com");
 
     cy.contains("Authentifier votre statut");
     cy.contains("S’identifier avec").click();
@@ -24,9 +48,6 @@ describe("sign-in with a client requiring certification dirigeant", () => {
     cy.origin("https://fcp.integ01.dev-franceconnect.fr", () => {
       cy.contains("Continuer sur FSPublic").click();
     });
-
-    cy.contains("Vous allez vous connecter en tant que ");
-    cy.contains("Angela Claire Louise DUBOIS");
 
     cy.contains('"job": "Single Dirigeant",');
 

@@ -84,6 +84,8 @@ export const interactionEndControllerFactory =
       const user = getUserFromAuthenticatedSession(req);
 
       let currentAcr = await getCurrentAcr(req);
+      console.log({ currentAcr });
+      console.trace();
 
       const amr = getSessionStandardizedAuthenticationMethodsReferences(req);
       const ts = user.last_sign_in_at
