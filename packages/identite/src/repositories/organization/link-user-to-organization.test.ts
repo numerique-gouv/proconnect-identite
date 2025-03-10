@@ -38,6 +38,7 @@ suite("linkUserToOrganizationFactory", () => {
     assert.deepEqual(userOrganizationLink, {
       created_at: new Date("4444-04-04"),
       has_been_greeted: false,
+      is_executive: false,
       is_external: false,
       needs_official_contact_email_verification: false,
       official_contact_email_verification_sent_at: null,

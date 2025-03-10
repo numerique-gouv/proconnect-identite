@@ -2,12 +2,13 @@ import { getTrustedReferrerPath } from "@gouvfr-lasuite/proconnect.core/security
 import type { NextFunction, Request, Response } from "express";
 import HttpErrors from "http-errors";
 import { isEmpty } from "lodash-es";
-import { HOST } from "../config/env";
+import { FEATURE_CONSIDER_ALL_USERS_AS_CERTIFIED, HOST } from "../config/env";
 import { UserNotFoundError } from "../config/errors";
 import { is2FACapable, shouldForce2faForUser } from "../managers/2fa";
 import { isBrowserTrustedForUser } from "../managers/browser-authentication";
 import { greetForJoiningOrganization } from "../managers/organization/join";
 import {
+  getCertifiedOrganizationsByUserId,
   getOrganizationsByUserId,
   selectOrganization,
 } from "../managers/organization/main";
@@ -18,11 +19,15 @@ import {
   isWithinAuthenticatedSession,
   isWithinTwoFactorAuthenticatedSession,
 } from "../managers/session/authenticated";
+import { CertificationSessionSchema } from "../managers/session/certification";
 import {
   getEmailFromUnauthenticatedSession,
   getPartialUserFromUnauthenticatedSession,
 } from "../managers/session/unauthenticated";
-import { needsEmailVerificationRenewal } from "../managers/user";
+import {
+  isUserVerifiedWithFranceconnect,
+  needsEmailVerificationRenewal,
+} from "../managers/user";
 import { getSelectedOrganizationId } from "../repositories/redis/selected-organization";
 import { usesAuthHeaders } from "../services/uses-auth-headers";
 
@@ -227,12 +232,35 @@ export const checkUserIsVerifiedMiddleware = (
     }
   });
 
-export const checkUserHasPersonalInformationsMiddleware = (
+export const checkUserNeedCertificationDirigeantMiddleware = (
   req: Request,
   res: Response,
   next: NextFunction,
 ) =>
   checkUserIsVerifiedMiddleware(req, res, async (error) => {
+    try {
+      if (error) return next(error);
+      if (FEATURE_CONSIDER_ALL_USERS_AS_CERTIFIED) return next();
+
+      const { certificationDirigeantRequested: isRequested } =
+        await CertificationSessionSchema.parseAsync(req.session);
+      if (!isRequested) return next();
+
+      const { id: userId } = getUserFromAuthenticatedSession(req);
+      const isVerified = await isUserVerifiedWithFranceconnect(userId);
+      if (isVerified) return next();
+      return res.redirect("/users/certification-dirigeant");
+    } catch (error) {
+      next(error);
+    }
+  });
+
+export const checkUserHasPersonalInformationsMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) =>
+  checkUserNeedCertificationDirigeantMiddleware(req, res, async (error) => {
     try {
       if (error) return next(error);
 
@@ -337,29 +365,32 @@ export const checkUserHasSelectedAnOrganizationMiddleware = (
     try {
       if (error) return next(error);
 
-      const selectedOrganizationId = await getSelectedOrganizationId(
-        getUserFromAuthenticatedSession(req).id,
-      );
+      const userId = getUserFromAuthenticatedSession(req).id;
+      const selectedOrganizationId = await getSelectedOrganizationId(userId);
+      const {
+        mustReturnOneOrganizationInPayload,
+        certificationDirigeantRequested,
+      } = req.session;
 
-      if (
-        req.session.mustReturnOneOrganizationInPayload &&
-        !selectedOrganizationId
-      ) {
-        const userOrganisations = await getOrganizationsByUserId(
-          getUserFromAuthenticatedSession(req).id,
-        );
-
-        if (userOrganisations.length === 1) {
-          await selectOrganization({
-            user_id: getUserFromAuthenticatedSession(req).id,
-            organization_id: userOrganisations[0].id,
-          });
-        } else {
-          return res.redirect("/users/select-organization");
-        }
+      if (selectedOrganizationId || !mustReturnOneOrganizationInPayload) {
+        // If already has a selected org or doesn't need one in payload, proceed
+        return next();
       }
 
-      return next();
+      const userOrganizations = certificationDirigeantRequested
+        ? await getCertifiedOrganizationsByUserId(userId)
+        : await getOrganizationsByUserId(userId);
+
+      if (userOrganizations.length === 1) {
+        // If user has exactly one org, auto-select it
+        await selectOrganization({
+          user_id: userId,
+          organization_id: userOrganizations[0].id,
+        });
+        return next();
+      }
+
+      return res.redirect("/users/select-organization");
     } catch (error) {
       next(error);
     }
