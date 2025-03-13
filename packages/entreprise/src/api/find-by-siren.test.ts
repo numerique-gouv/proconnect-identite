@@ -1,7 +1,7 @@
 //
 
 import { createEntrepriseOpenApiClient } from "#src/client";
-import { coolTrackingParams } from "#src/testing";
+import { coolTrackingParams } from "#testing";
 import assert from "node:assert/strict";
 import { mock, suite, test } from "node:test";
 import { findBySirenFactory } from "./find-by-siren.js";

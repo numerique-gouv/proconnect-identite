@@ -1,4 +1,5 @@
 export interface BaseUserOrganizationLink {
+  is_executive: boolean;
   is_external: boolean;
   verification_type:
     | "code_sent_to_official_contact_email"
