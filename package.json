@@ -35,7 +35,7 @@
     "fixtures:load-ci": "tsx scripts/run-sql-script.ts",
     "lint": "prettier --write '**/*.ts'",
     "migrate": "dotenvx --quiet run --convention=flow -- node-pg-migrate",
-    "start": "tsx --import ./src/instrument.ts src/index.ts",
+    "start": "npm run start:with-mocks",
     "start:with-mocks": "tsx --import=./mocks/serve.ts --import ./src/instrument.ts src/index.ts",
     "test": "run-s test:*",
     "test:lint": "prettier '**/*.ts' --list-different",
