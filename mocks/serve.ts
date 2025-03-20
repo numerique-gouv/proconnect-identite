@@ -1,10 +1,7 @@
 import { setupServer } from "msw/node";
 import type { Server } from "node:http";
 import { entrepriseHandlers } from "./entreprise.api.gouv.fr";
-import {
-  FranceconnectFrontChannel,
-  franceconnectHandlers,
-} from "./oidc.franceconnect.gouv.fr";
+import { FranceconnectFrontChannel } from "./oidc.franceconnect.gouv.fr";
 
 console.log("[🎭] Opening to mockery theater");
 
@@ -18,7 +15,7 @@ try {
   console.error(error);
 }
 
-const server = setupServer(...entrepriseHandlers, ...franceconnectHandlers);
+const server = setupServer(...entrepriseHandlers);
 
 server.events.on("request:start", ({ request }) => {
   console.log(`[🎭] <- ${request.method} ${request.url}`);

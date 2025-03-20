@@ -5,7 +5,6 @@ import express from "express";
 import session from "express-session";
 import fs from "fs";
 import helmet from "helmet";
-import { Server } from "http";
 import HttpErrors from "http-errors";
 import { isNull, omitBy } from "lodash-es";
 import morgan from "morgan";
@@ -13,8 +12,10 @@ import { inspect } from "node:util";
 import Provider, { type ClientMetadata, errors } from "oidc-provider";
 import path from "path";
 import { ZodError } from "zod";
+import { FranceconnectFrontChannel } from "../mocks/oidc.franceconnect.gouv.fr/index";
 import {
   ACCESS_LOG_PATH,
+  DEPLOY_ENV,
   FEATURE_USE_SECURE_COOKIES,
   FEATURE_USE_SECURITY_RESPONSE_HEADERS,
   HOST,
@@ -43,7 +44,9 @@ import {
 } from "./services/renderer";
 import { usesAuthHeaders } from "./services/uses-auth-headers";
 
-const app = express();
+//
+
+export const app = express();
 
 if (FEATURE_USE_SECURITY_RESPONSE_HEADERS) {
   app.use(
@@ -244,6 +247,14 @@ app.use((req, _res, next) => {
 });
 app.use("/oauth", oidcProvider.callback());
 
+if (DEPLOY_ENV === "localhost" || DEPLOY_ENV === "preview") {
+  console.log("[🎭]\tUsing FranceConnect theater over");
+  console.log(
+    `[🎭]\thttp://localhost:${PORT}/mocks/oidc.franceconnect.gouv.fr`,
+  );
+  app.use("/mocks/oidc.franceconnect.gouv.fr", FranceconnectFrontChannel);
+}
+
 app.use(async (req, res, _next) => {
   res.setHeader("Content-Type", "text/html");
   res.status(404).send(
@@ -323,15 +334,3 @@ app.use(function errorHandler(
     interactionId: req.session.interactionId,
   });
 });
-
-let server: Server | undefined;
-
-try {
-  server = app.listen(PORT, () => {
-    logger.info(`application is listening on port ${PORT}`);
-  });
-} catch (err) {
-  if (server && server.listening) server.close();
-  logger.error(err);
-  process.exit(1);
-}

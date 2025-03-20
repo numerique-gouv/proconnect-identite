@@ -1,8 +1,11 @@
+import type { FindBySiretHandler } from "@gouvfr-lasuite/proconnect.entreprise/api/insee";
+import { getOrganizationInfoFactory } from "@gouvfr-lasuite/proconnect.identite/managers/organization";
 import { AxiosError } from "axios";
+import { readFile } from "fs/promises";
 import { isDate, isEmpty, toInteger } from "lodash-es";
+import { join } from "path";
 import type { Pool } from "pg";
 import { cleanup } from "../mocks/serve";
-import { getOrganizationInfo } from "../src/connectors/api-sirene";
 import { getDatabaseConnection } from "../src/connectors/postgres";
 import { upsert } from "../src/repositories/organization/setters";
 import { logger } from "../src/services/log";
@@ -12,6 +15,23 @@ import {
   isOrganizationInfo,
 } from "../src/services/script-helpers";
 //
+
+const findBySiret: FindBySiretHandler = async (siret) => {
+  return JSON.parse(
+    await readFile(
+      join(
+        import.meta.dirname,
+        "../mocks/entreprise.api.gouv.fr/etablissements",
+        `${siret}.json`,
+      ),
+      "utf8",
+    ),
+  ).data;
+};
+export const getOrganizationInfo = getOrganizationInfoFactory({
+  findBySiren: () => Promise.reject(new Error("💣")),
+  findBySiret,
+});
 
 // ex: for public insee subscription the script can be run like so:
 // npm run update-organization-info 2000

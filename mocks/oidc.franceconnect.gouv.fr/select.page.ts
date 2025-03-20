@@ -41,7 +41,7 @@ export default function SelectPage(props: SelectPageProps) {
         <header>
           <h2>Click on one of those fake civilians to impersonate them (soon)</p>
         </header>
-        <form action="/interaction/${codeValue}/login" method="post">
+        <form action="/mocks/oidc.franceconnect.gouv.fr/interaction/${codeValue}/login" method="post">
           <img src='${avatar}'/>
           <h3>${profile.given_name} ${profile.family_name}</h3>
           <pre>${JSON.stringify(profile, null, 2)}</pre>
@@ -51,9 +51,9 @@ export default function SelectPage(props: SelectPageProps) {
               FranceConnectUserInfoResponseSchema.omit({ sub: true }).shape,
             )
               .map(
-                ([key]) =>
+                ([key, value]) =>
                   `<label for="${key}">${key}</label>` +
-                  `<input id="${key}" type="text" name="${key}" value="${profile[key]}"/>`,
+                  `<input id="${key}" type="text" name="${key}" value="${value}"/>`,
               )
               .join("<br/>")}
           </details>
