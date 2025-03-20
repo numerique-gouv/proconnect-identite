@@ -10,6 +10,7 @@ import {
   findByUserId,
   findById as findOrganizationById,
   findPendingByUserId,
+  findWhereUserIsExecutive,
   getUsers,
 } from "../../repositories/organization/getters";
 import {
@@ -19,6 +20,7 @@ import {
 import { setSelectedOrganizationId } from "../../repositories/redis/selected-organization";
 
 export const getOrganizationsByUserId = findByUserId;
+export const getCertifiedOrganizationsByUserId = findWhereUserIsExecutive;
 export const getOrganizationById = findOrganizationById;
 export const getUserOrganizations = async ({
   user_id,
