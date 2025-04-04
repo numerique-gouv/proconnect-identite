@@ -1,3 +1,4 @@
+import { NotFoundError } from "@gouvfr-lasuite/proconnect.identite/errors";
 import { AxiosError } from "axios";
 
 export class InvalidEmailError extends Error {
@@ -9,6 +10,12 @@ export class InvalidEmailError extends Error {
 
 export class ForbiddenError extends Error {}
 
+export class SelectedOrganizationIdNotFoundError extends NotFoundError {
+  constructor(message?: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "SelectedOrganizationIdNotFoundError";
+  }
+}
 export class UnableToAutoJoinOrganizationError extends Error {
   constructor(public moderationId: number) {
     super();
