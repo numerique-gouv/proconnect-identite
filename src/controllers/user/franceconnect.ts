@@ -9,12 +9,14 @@ import {
   getFranceConnectRedirectUrl,
   getFranceConnectUser,
 } from "../../connectors/franceconnect";
+import { getOrganizationsByUserId } from "../../managers/organization/main";
 import {
   getUserFromAuthenticatedSession,
   updateUserInAuthenticatedSession,
 } from "../../managers/session/authenticated";
 import { FranceConnectOidcSessionSchema } from "../../managers/session/franceconnect";
 import { updateFranceConnectUserInfo } from "../../managers/user";
+import { updateUserOrganizationLink } from "../../repositories/organization/setters";
 
 //
 
@@ -27,6 +29,8 @@ export async function postFranceConnectController(
     const { nonce, state } = createOidcChecks();
     req.session.nonce = nonce;
     req.session.state = state;
+    req.session.redirectTo =
+      "/personal-information?notification=personal_information_update_via_franceconnect_success";
 
     const url = await getFranceConnectRedirectUrl(nonce, state);
 
@@ -54,9 +58,8 @@ export async function getFranceConnectOidcCallbackController(
     }
     const { code } = await z.object({ code: z.string() }).parseAsync(req.query);
 
-    const { nonce, state } = await FranceConnectOidcSessionSchema.parseAsync(
-      req.session,
-    );
+    const { nonce, state, redirectTo } =
+      await FranceConnectOidcSessionSchema.parseAsync(req.session);
     const { user_info, id_token } = await getFranceConnectUser({
       code,
       currentUrl: `${HOST}${FRANCECONNECT_CALLBACK_URL}${req.url.substring(req.path.length)}`,
@@ -65,14 +68,23 @@ export async function getFranceConnectOidcCallbackController(
     });
     req.session.id_token_hint = id_token;
 
-    const { id: user_id } = getUserFromAuthenticatedSession(req);
+    const { id: userId } = getUserFromAuthenticatedSession(req);
 
-    const updatedUser = await updateFranceConnectUserInfo(user_id, user_info);
+    const updatedUser = await updateFranceConnectUserInfo(userId, user_info);
     updateUserInAuthenticatedSession(req, updatedUser);
 
-    return res.redirect(
-      "/personal-information?notification=personal_information_update_via_franceconnect_success",
+    const userOrganizations = await getOrganizationsByUserId(userId);
+
+    await Promise.all(
+      userOrganizations.map(({ id }) =>
+        updateUserOrganizationLink(id, userId, {
+          verification_type: null,
+          verified_at: null,
+        }),
+      ),
     );
+
+    return res.redirect(redirectTo);
   } catch (error) {
     next(error);
   }

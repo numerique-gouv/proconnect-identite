@@ -1,0 +1,39 @@
+<div>
+  <h1 class="fr-h3">Certifier votre statut</h1>
+
+  <p>
+    Vous pouvez authentifier instantanément votre statut de dirigeant grâce à
+    FranceConnect.
+  </p>
+
+  <% if (requiresVerification) { %>
+  <form action="/users/certification-dirigeant" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken; %>" />
+    <div class="fr-connect-group">
+      <button aria-label="S’identifier avec FranceConnect" class="fr-connect">
+        <span class="fr-connect__login">S’identifier avec</span>
+        <span class="fr-connect__brand">FranceConnect</span>
+      </button>
+      <p>
+        <a
+          href="https://franceconnect.gouv.fr/"
+          target="_blank"
+          rel="noopener"
+          title="Qu’est-ce que FranceConnect ? - nouvelle fenêtre"
+          >Qu’est-ce que FranceConnect ?</a
+        >
+      </p>
+    </div>
+  </form>
+  <% } else { %>
+  <div class="fr-connect-group">
+    <a
+      href="/users/certification-dirigeant/confirm"
+      class="fr-btn fr-btn--secondary"
+      >
+      Continuer
+    </a>
+  </div>
+  <% } %>
+
+</div>

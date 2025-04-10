@@ -7,6 +7,8 @@ import { z } from "zod";
 export const FranceConnectOidcSessionSchema = z.object({
   nonce: z.string(),
   state: z.string(),
+  //
+  redirectTo: z.string(),
   id_token_hint: z.string().optional(),
 });
 
