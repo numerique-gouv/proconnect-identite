@@ -28,7 +28,7 @@ describe("delete account", () => {
     cy.title().should("include", "Informations personnelles -");
     cy.contains("S’identifier avec").click();
     cy.title().should("include", "Connexion 🎭 FranceConnect 🎭");
-    cy.contains("Je suis Jean Dupont").click();
+    cy.contains("Je suis Jean De La Rose").click();
 
     // WARNING(douglasduteil): auto logout post FranceConnect connexion bypass
     // We are trying to come back to the our app with an open FranceConnect session here

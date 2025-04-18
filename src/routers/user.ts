@@ -6,16 +6,22 @@ import {
   getJoinOrganizationController,
   getOrganizationSuggestionsController,
   getUnableToAutoJoinOrganizationController,
+  getUnableToCertifyUserAsExecutiveController,
   postJoinOrganizationMiddleware,
   postQuitUserOrganizationController,
 } from "../controllers/organization";
 import { postSignInWithAuthenticatorAppController } from "../controllers/totp";
 import { get2faSignInController } from "../controllers/user/2fa-sign-in";
+import {
+  getCertificationDirigeantConfirmController,
+  getCertificationDirigeantController,
+  postCertificationDirigeantController,
+} from "../controllers/user/certification-dirigeant";
 import { postDeleteUserController } from "../controllers/user/delete";
 import { postCancelModerationAndRedirectControllerFactory } from "../controllers/user/edit-moderation";
 import {
   getFranceConnectLogoutCallbackControllerFactory,
-  getFranceConnectOidcCallbackToUpdateUserMiddleware,
+  getFranceConnectLoginCallbackMiddleware,
   postFranceConnectLoginRedirectControllerFactory,
   useFranceConnectLogoutMiddlewareFactory,
 } from "../controllers/user/franceconnect";
@@ -297,7 +303,7 @@ export const userRouter = () => {
     "/personal-information/franceconnect/login/callback",
     rateLimiterMiddleware,
     checkUserIsVerifiedMiddleware,
-    getFranceConnectOidcCallbackToUpdateUserMiddleware,
+    getFranceConnectLoginCallbackMiddleware,
     useFranceConnectLogoutMiddlewareFactory(
       `${HOST}/users/personal-information/franceconnect/logout/callback`,
     ),
@@ -468,6 +474,36 @@ export const userRouter = () => {
     getFranceConnectLogoutCallbackControllerFactory(`${HOST}/oauth/logout`),
   );
 
+  userRouter.get(
+    "/certification-dirigeant",
+    rateLimiterMiddleware,
+    checkUserIsVerifiedMiddleware,
+    csrfProtectionMiddleware,
+    getCertificationDirigeantController,
+  );
+
+  userRouter.post(
+    "/certification-dirigeant",
+    rateLimiterMiddleware,
+    checkUserIsVerifiedMiddleware,
+    csrfProtectionMiddleware,
+    postCertificationDirigeantController,
+  );
+
+  userRouter.get(
+    "/certification-dirigeant/confirm",
+    rateLimiterMiddleware,
+    // checkUserHasPersonalInformationsMiddleware,
+    csrfProtectionMiddleware,
+    getCertificationDirigeantConfirmController,
+  );
+
+  userRouter.get(
+    "/unable-to-certify-user-as-executive",
+    checkUserHasPersonalInformationsMiddleware,
+    csrfProtectionMiddleware,
+    getUnableToCertifyUserAsExecutiveController,
+  );
   return userRouter;
 };
 

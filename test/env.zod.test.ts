@@ -13,6 +13,8 @@ describe("env.zod", () => {
       DATABASE_URL:
         "postgres://moncomptepro:moncomptepro@127.0.0.1:5432/moncomptepro",
       ENTREPRISE_API_TOKEN: "ENTREPRISE_API_TOKEN",
+      FRANCECONNECT_ISSUER:
+        "http://localhost:3000/___testing___/oidc.franceconnect.gouv.fr/api/v2",
     };
 
     const env = envSchema.parse(sample_env);
@@ -30,6 +32,7 @@ describe("env.zod", () => {
         "https://proconnect.gouv.fr/assurance/certification-dirigeant",
       API_AUTH_PASSWORD: "admin",
       API_AUTH_USERNAME: "admin",
+      CERTIFICATION_DIRIGEANT_MAX_AGE_IN_MINUTES: 1440,
       CRISP_BASE_URL: "https://api.crisp.chat",
       CRISP_IDENTIFIER: "",
       CRISP_KEY: "",
