@@ -1,6 +1,8 @@
 // source https://github.com/panva/node-oidc-provider/blob/6fbcd71b08b8b8f381a97a82809de42c75904c6b/example/adapters/redis.js
-import { isEmpty } from "lodash-es";
+import type { Dictionary } from "lodash";
+import { isEmpty, isNull, omitBy } from "lodash-es";
 import { getNewRedisClient } from "../../connectors/redis";
+import { findByClientId } from "../oidc-client";
 
 const getClient = () =>
   getNewRedisClient({
@@ -32,6 +34,9 @@ function userCodeKeyFor(userCode: any) {
 
 function uidKeyFor(uid: any) {
   return `uid:${uid}`;
+}
+function omitNullProperties<T extends object>(object: T): Dictionary<T> {
+  return omitBy(object, isNull);
 }
 
 class RedisAdapter {
@@ -90,7 +95,11 @@ class RedisAdapter {
       : await getClient().get(this.key(id));
 
     if (isEmpty(data)) {
-      return undefined;
+      const maybe_client = await findByClientId(id);
+      if (isEmpty(maybe_client)) return undefined;
+      const client = omitNullProperties(maybe_client);
+      await getClient().set(this.key(id), JSON.stringify(client));
+      return client;
     }
 
     if (typeof data === "string") {
