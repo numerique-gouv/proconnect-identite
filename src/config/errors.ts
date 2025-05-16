@@ -32,6 +32,13 @@ export class UserMustConfirmToJoinOrganizationError extends Error {
   }
 }
 
+export class AccessRestrictedToPublicServiceEmailError extends Error {
+  constructor(message?: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "AccessRestrictedToPublicServiceEmailError";
+  }
+}
+
 export class InvalidCredentialsError extends Error {}
 
 export class EmailUnavailableError extends Error {}
