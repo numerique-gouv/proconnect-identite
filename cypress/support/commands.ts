@@ -2,6 +2,7 @@
 
 import { generateToken } from "@sunknudsen/totp";
 import { checkA11y } from "./a11y/checkA11y";
+import { seed } from "./commands/seed";
 
 //
 
@@ -20,6 +21,7 @@ declare global {
       setCustomParams(customParams: any): Chainable<void>;
       setRequestedAcrs(requestedAcrs?: string[]): Chainable<void>;
       getDescribed: typeof getDescribedCommand;
+      seed: typeof seed;
       getByLabel: typeof getByLabelCommand;
     }
   }
@@ -121,6 +123,7 @@ function getDescribedCommand(text: string) {
     });
 }
 Cypress.Commands.add("getDescribed", getDescribedCommand);
+Cypress.Commands.add("seed", seed);
 
 function getByLabelCommand(text: string) {
   return cy.get(`[aria-label="${text}"]`);
