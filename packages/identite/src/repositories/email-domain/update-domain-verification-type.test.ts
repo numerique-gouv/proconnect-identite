@@ -40,7 +40,7 @@ suite("updateDomainVerificationTypeFactory", () => {
     assert.deepEqual(emailDomain, {
       can_be_suggested: true,
       created_at: new Date("4444-04-04"),
-      domain: "darkangels.worldERREUR",
+      domain: "darkangels.world",
       id: 1,
       organization_id: 1,
       updated_at: new Date("4444-04-04"),
