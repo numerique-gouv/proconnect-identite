@@ -7,15 +7,17 @@ import { getEmailDomain } from "@gouvfr-lasuite/proconnect.core/services/email";
 import type {
   AddDomainHandler,
   FindEmailDomainsByOrganizationIdHandler,
+  UpdateDomainVerificationTypeHandler,
 } from "@gouvfr-lasuite/proconnect.identite/repositories/email-domain";
 import type { FindByIdHandler } from "@gouvfr-lasuite/proconnect.identite/repositories/organization";
 import type { EmailDomain } from "@gouvfr-lasuite/proconnect.identite/types";
-import { isEmpty, some } from "lodash-es";
+import { isEmpty } from "lodash-es";
 
 //
 
 type FactoryDependencies = {
   addDomain: AddDomainHandler;
+  updateDomainVerificationType: UpdateDomainVerificationTypeHandler;
   findEmailDomainsByOrganizationId: FindEmailDomainsByOrganizationIdHandler;
   findOrganizationById: FindByIdHandler;
   getUsers: GetUsersByOrganizationHandler;
@@ -24,6 +26,7 @@ type FactoryDependencies = {
 
 export function markDomainAsVerifiedFactory({
   addDomain,
+  updateDomainVerificationType,
   findEmailDomainsByOrganizationId,
   findOrganizationById,
   getUsers,
@@ -45,18 +48,23 @@ export function markDomainAsVerifiedFactory({
     const emailDomains =
       await findEmailDomainsByOrganizationId(organization_id);
 
-    if (
-      !some(emailDomains, {
-        domain,
-        verification_type: domain_verification_type,
-      })
-    ) {
+    const emailDomainCountForOrganization = emailDomains.length;
+
+    if (emailDomainCountForOrganization === 0) {
       await addDomain({
         organization_id,
         domain,
         verification_type: domain_verification_type,
       });
+    } else {
+      // it cannot be > 1 because of the unique constraint
+      const emailDomain = emailDomains[0];
+      await updateDomainVerificationType({
+        id: emailDomain.id,
+        verification_type: domain_verification_type,
+      });
     }
+
     const usersInOrganization = await getUsers(organization_id);
 
     await Promise.all(
