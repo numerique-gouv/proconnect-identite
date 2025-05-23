@@ -10,13 +10,14 @@ exports.shorthands = undefined;
  */
 exports.up = async (pgm) => {
   await pgm.db.query(`
-        ALTER TABLE email_domains
-          DROP CONSTRAINT unique_organization_domain;
-      `);
+    ALTER TABLE email_domains
+      DROP CONSTRAINT unique_organization_domain;
+  `);
 
   const emailDomains = await pgm.db.query(`
-        SELECT id, organization_id, domain, verification_type
-        FROM email_domains`);
+    SELECT id, organization_id, domain, verification_type
+    FROM email_domains
+  `);
   const aggregatedEmailDomains = {};
   for (const emailDomain of emailDomains.rows) {
     const { id, domain, organization_id, verification_type } = emailDomain;
@@ -51,17 +52,18 @@ exports.up = async (pgm) => {
         .map((emailDomain) => emailDomain.id);
 
       console.log("Deleting ids: ", idsToDelete.join(","));
-              DELETE FROM email_domains
-              WHERE id IN (${idsToDelete.join(", ")})
-          `);
+      await pgm.db.query(`        
+        DELETE FROM email_domains
+        WHERE id IN (${idsToDelete.join(", ")})
+      `);
     }
   }
 
   await pgm.db.query(`
-        ALTER TABLE email_domains
-          ADD CONSTRAINT unique_organization_domain
-            UNIQUE (organization_id, domain);
-      `);
+    ALTER TABLE email_domains
+      ADD CONSTRAINT unique_organization_domain
+        UNIQUE (organization_id, domain);
+  `);
 };
 
 /**
@@ -71,13 +73,13 @@ exports.up = async (pgm) => {
  */
 exports.down = async (pgm) => {
   await pgm.db.query(`
-        ALTER TABLE email_domains
-          DROP CONSTRAINT unique_organization_domain;
-      `);
+    ALTER TABLE email_domains
+      DROP CONSTRAINT unique_organization_domain;
+  `);
 
   await pgm.db.query(`
-        ALTER TABLE email_domains
-          ADD CONSTRAINT unique_organization_domain
-            UNIQUE (organization_id, domain, verification_type);
-      `);
+    ALTER TABLE email_domains
+      ADD CONSTRAINT unique_organization_domain
+        UNIQUE (organization_id, domain, verification_type);
+  `);
 };

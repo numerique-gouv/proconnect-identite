@@ -24,12 +24,12 @@ suite("updateDomainVerificationTypeFactory", () => {
       ;
     `;
     await pg.sql`
-    INSERT INTO email_domains
-      (id, organization_id, domain, verification_type, can_be_suggested, created_at, updated_at)
-    VALUES
-      (1, 1, 'darkangels.world', NULL, TRUE, '3333-03-03', '3333-04-04')
-    ;
-  `;
+      INSERT INTO email_domains
+        (id, organization_id, domain, verification_type, can_be_suggested, created_at, updated_at)
+      VALUES
+        (1, 1, 'darkangels.world', NULL, TRUE, '3333-03-03', '3333-04-04')
+      ;
+    `;
     mock.timers.enable({ apis: ["Date"], now: new Date("4444-04-04") });
 
     const emailDomain = await updateDomainVerificationType({
