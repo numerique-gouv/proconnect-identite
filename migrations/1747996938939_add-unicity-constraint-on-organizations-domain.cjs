@@ -51,10 +51,9 @@ exports.up = async (pgm) => {
         .map((emailDomain) => emailDomain.id);
 
       console.log("Deleting ids: ", idsToDelete.join(","));
-      await pgm.db.query(`
-                    DELETE FROM email_domains
-                    WHERE id IN (${idsToDelete.join(", ")})
-                `);
+              DELETE FROM email_domains
+              WHERE id IN (${idsToDelete.join(", ")})
+          `);
     }
   }
 
