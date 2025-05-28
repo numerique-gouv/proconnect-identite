@@ -14,6 +14,11 @@ import { postSignInWithAuthenticatorAppController } from "../controllers/totp";
 import { get2faSignInController } from "../controllers/user/2fa-sign-in";
 import { getCertificationDirigeantController } from "../controllers/user/certification-dirigeant";
 import { postDeleteUserController } from "../controllers/user/delete";
+import {
+  getAuthenticatorAppConfigurationController,
+  getConfiguringSingleUseCodeController,
+  getDoubleAuthenticationChoiceController,
+} from "../controllers/user/double-authentication-choice";
 import { postCancelModerationAndRedirectControllerFactory } from "../controllers/user/edit-moderation";
 import {
   getFranceConnectLoginCallbackMiddleware,
@@ -163,6 +168,28 @@ export const userRouter = () => {
     csrfProtectionMiddleware,
     get2faSignInController,
   );
+
+  userRouter.get(
+    "/double-authentication-choice",
+    checkUserIsConnectedMiddleware,
+    csrfProtectionMiddleware,
+    getDoubleAuthenticationChoiceController,
+  );
+
+  userRouter.get(
+    "/configuring-single-use-code",
+    checkUserIsConnectedMiddleware,
+    csrfProtectionMiddleware,
+    getConfiguringSingleUseCodeController,
+  );
+
+  userRouter.get(
+    "/authenticator-app-configuration",
+    checkUserIsConnectedMiddleware,
+    csrfProtectionMiddleware,
+    getAuthenticatorAppConfigurationController,
+  );
+
   userRouter.post(
     "/2fa-sign-in-with-authenticator-app",
     checkUserIsConnectedMiddleware,
