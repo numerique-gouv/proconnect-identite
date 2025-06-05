@@ -15,9 +15,11 @@ import { get2faSignInController } from "../controllers/user/2fa-sign-in";
 import { getCertificationDirigeantController } from "../controllers/user/certification-dirigeant";
 import { postDeleteUserController } from "../controllers/user/delete";
 import {
+  get2faSuccessfullyConfiguredController,
   getAuthenticatorAppConfigurationController,
   getConfiguringSingleUseCodeController,
   getDoubleAuthenticationChoiceController,
+  post2faSuccessfullyConfiguredMiddleware,
 } from "../controllers/user/double-authentication-choice";
 import { postCancelModerationAndRedirectControllerFactory } from "../controllers/user/edit-moderation";
 import {
@@ -188,6 +190,22 @@ export const userRouter = () => {
     checkUserIsConnectedMiddleware,
     csrfProtectionMiddleware,
     getAuthenticatorAppConfigurationController,
+  );
+
+  userRouter.get(
+    "/2fa-successfully-configured",
+    checkUserIsConnectedMiddleware,
+    csrfProtectionMiddleware,
+    get2faSuccessfullyConfiguredController,
+  );
+
+  userRouter.post(
+    "/2fa-successfully-configured",
+    checkUserIsConnectedMiddleware,
+    csrfProtectionMiddleware,
+    post2faSuccessfullyConfiguredMiddleware,
+    checkUserSignInRequirementsMiddleware,
+    issueSessionOrRedirectController,
   );
 
   userRouter.post(
