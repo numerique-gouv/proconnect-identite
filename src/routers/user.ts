@@ -14,12 +14,14 @@ import { postSignInWithAuthenticatorAppController } from "../controllers/totp";
 import { get2faSignInController } from "../controllers/user/2fa-sign-in";
 import { getCertificationDirigeantController } from "../controllers/user/certification-dirigeant";
 import { postDeleteUserController } from "../controllers/user/delete";
+
 import {
   get2faSuccessfullyConfiguredController,
   getAuthenticatorAppConfigurationController,
   getConfiguringSingleUseCodeController,
   getDoubleAuthenticationChoiceController,
   post2faSuccessfullyConfiguredMiddleware,
+  postAuthenticatorAppConfigurationController,
 } from "../controllers/user/double-authentication-choice";
 import { postCancelModerationAndRedirectControllerFactory } from "../controllers/user/edit-moderation";
 import {
@@ -192,6 +194,16 @@ export const userRouter = () => {
     getAuthenticatorAppConfigurationController,
   );
 
+  userRouter.post(
+    "/authenticator-app-configuration",
+    nocache(),
+    urlencoded({ extended: false }),
+    rateLimiterMiddleware,
+    checkUserCanAccessAdminMiddleware,
+    csrfProtectionMiddleware,
+    postAuthenticatorAppConfigurationController,
+  );
+
   userRouter.get(
     "/2fa-successfully-configured",
     checkUserIsConnectedMiddleware,
@@ -217,6 +229,7 @@ export const userRouter = () => {
     checkUserSignInRequirementsMiddleware,
     issueSessionOrRedirectController,
   );
+
   userRouter.post(
     "/2fa-sign-in-with-passkey",
     checkUserIsConnectedMiddleware,
