@@ -148,6 +148,35 @@ describe("sign-in with a client requiring 2fa identity", () => {
       '"acr": "https://proconnect.gouv.fr/assurance/consistency-checked-2fa"',
     );
   });
+
+  it.only("should return error if totp code isn't valid", function () {
+    cy.get("button#custom-connection").click({ force: true });
+
+    cy.login("ial2-aal1@yopmail.com");
+
+    cy.get("#radio-hint-totp").check({ force: true });
+
+    cy.get("a.fr-btn").contains("Continuer").click();
+
+    cy.contains("Installer votre outil d’authentification");
+
+    cy.get("#is-authenticator-app-installed").check({ force: true });
+
+    cy.get("a.fr-btn").contains("Continuer").click();
+
+    cy.contains("Scanner ce QRcode avec votre application");
+
+    const invalidTotpCode = "123456";
+
+    cy.get("[name=totpToken]").type(invalidTotpCode);
+    cy.get(
+      '[action="/users/authenticator-app-configuration"] [type="submit"]',
+    ).click();
+
+    cy.contains(
+      "Erreur : le code que vous avez utilisé est invalide. Merci de recommencer.",
+    );
+  });
 });
 
 describe("sign-in with a client requiring certification dirigeant identity", () => {
