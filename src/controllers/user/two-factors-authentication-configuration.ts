@@ -1,33 +1,58 @@
 import { NotFoundError } from "@gouvfr-lasuite/proconnect.identite/errors";
 import type { NextFunction, Request, Response } from "express";
 import { z } from "zod";
-import { InvalidTotpTokenError } from "../config/errors";
+import { InvalidTotpTokenError } from "../../config/errors";
 import {
   addAuthenticationMethodReferenceInSession,
   getUserFromAuthenticatedSession,
-  updateUserInAuthenticatedSession,
-} from "../managers/session/authenticated";
+} from "../../managers/session/authenticated";
 import {
   deleteTemporaryTotpKey,
   getTemporaryTotpKey,
   setTemporaryTotpKey,
-} from "../managers/session/temporary-totp-key";
+} from "../../managers/session/temporary-totp-key";
 import {
-  authenticateWithAuthenticatorApp,
   confirmAuthenticatorAppRegistration,
-  deleteAuthenticatorAppConfiguration,
   generateAuthenticatorAppRegistrationOptions,
-  isAuthenticatorAppConfiguredForUser,
-} from "../managers/totp";
-import {
-  sendAddFreeTOTPEmail,
-  sendDeleteFreeTOTPApplicationEmail,
-} from "../managers/user";
-import { csrfToken } from "../middlewares/csrf-protection";
-import { codeSchema } from "../services/custom-zod-schemas";
+} from "../../managers/totp";
+import { sendAddFreeTOTPEmail } from "../../managers/user";
+import { csrfToken } from "../../middlewares/csrf-protection";
+import { codeSchema } from "../../services/custom-zod-schemas";
 import getNotificationsFromRequest, {
   getNotificationLabelFromRequest,
-} from "../services/get-notifications-from-request";
+} from "../../services/get-notifications-from-request";
+
+export const getTwoFactorsAuthenticationChoiceController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    return res.render("user/double-authentication-choice", {
+      pageTitle: "Choisir un mode de double authentification",
+      csrfToken: csrfToken(req),
+      illustration: "illu-2FA.svg",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getConfiguringSingleUseCodeController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    return res.render("user/configuring-single-use-code", {
+      pageTitle: "Installer votre outil d'authentification",
+      csrfToken: csrfToken(req),
+      illustration: "illu-2FA.svg",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const getAuthenticatorAppConfigurationController = async (
   req: Request,
@@ -35,28 +60,24 @@ export const getAuthenticatorAppConfigurationController = async (
   next: NextFunction,
 ) => {
   try {
-    const { id: user_id, email } = getUserFromAuthenticatedSession(req);
-
+    const { email } = getUserFromAuthenticatedSession(req);
     const existingTemporaryTotpKey = getTemporaryTotpKey(req);
-
     const { totpKey, humanReadableTotpKey, qrCodeDataUrl } =
       await generateAuthenticatorAppRegistrationOptions(
         email,
         existingTemporaryTotpKey,
       );
-
     setTemporaryTotpKey(req, totpKey);
 
     const notificationLabel = await getNotificationLabelFromRequest(req);
     const hasCodeError = notificationLabel === "invalid_totp_token";
 
-    return res.render("authenticator-app-configuration", {
-      pageTitle: "Configuration TOTP",
+    return res.render("user/authenticator-app-configuration", {
+      pageTitle: "Configurer un code à usage unique",
       notifications: await getNotificationsFromRequest(req),
       hasCodeError,
       csrfToken: csrfToken(req),
-      isAuthenticatorAlreadyConfigured:
-        await isAuthenticatorAppConfiguredForUser(user_id),
+      illustration: "illu-2FA.svg",
       humanReadableTotpKey,
       qrCodeDataUrl,
     });
@@ -82,7 +103,6 @@ export const postAuthenticatorAppConfigurationController = async (
     if (!temporaryTotpKey) {
       throw new NotFoundError();
     }
-
     const updatedUser = await confirmAuthenticatorAppRegistration(
       user_id,
       temporaryTotpKey,
@@ -94,13 +114,11 @@ export const postAuthenticatorAppConfigurationController = async (
 
     await sendAddFreeTOTPEmail({ user_id });
 
-    return res.redirect(
-      "/connection-and-account?notification=authenticator_added",
-    );
+    return res.redirect("/users/2fa-successfully-configured");
   } catch (error) {
     if (error instanceof InvalidTotpTokenError) {
       return res.redirect(
-        "/authenticator-app-configuration?notification=invalid_totp_token",
+        "/users/authenticator-app-configuration?notification=invalid_totp_token",
       );
     }
 
@@ -108,51 +126,30 @@ export const postAuthenticatorAppConfigurationController = async (
   }
 };
 
-export const postDeleteAuthenticatorAppConfigurationController = async (
+export const get2faSuccessfullyConfiguredController = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const { id: user_id } = getUserFromAuthenticatedSession(req);
-
-    const updatedUser = await deleteAuthenticatorAppConfiguration(user_id);
-
-    updateUserInAuthenticatedSession(req, updatedUser);
-
-    await sendDeleteFreeTOTPApplicationEmail({ user_id });
-
-    return res.redirect(
-      `/connection-and-account?notification=authenticator_successfully_deleted`,
-    );
+    return res.render("user/2fa-successfully-configured", {
+      pageTitle: "Votre double authentification est bien configurée",
+      csrfToken: csrfToken(req),
+      illustration: "illu-ok.svg",
+    });
   } catch (error) {
     next(error);
   }
 };
 
-export const postSignInWithAuthenticatorAppController = async (
-  req: Request,
-  res: Response,
+export const post2faSuccessfullyConfiguredMiddleware = async (
+  _req: Request,
+  _res: Response,
   next: NextFunction,
 ) => {
   try {
-    const schema = z.object({
-      totpToken: codeSchema(),
-    });
-
-    const { totpToken } = await schema.parseAsync(req.body);
-
-    const { id: user_id } = getUserFromAuthenticatedSession(req);
-
-    const user = await authenticateWithAuthenticatorApp(user_id, totpToken);
-
-    addAuthenticationMethodReferenceInSession(req, res, user, "totp");
-
     return next();
   } catch (error) {
-    if (error instanceof InvalidTotpTokenError) {
-      return res.redirect("/users/2fa-sign-in?notification=invalid_totp_token");
-    }
     next(error);
   }
 };
