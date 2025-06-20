@@ -32,37 +32,8 @@ export const entrepriseOpenApiClient: EntrepriseOpenApiClient =
         : undefined,
   });
 
-export const findBySiret = findBySiretFactory(
-  entrepriseOpenApiClient,
-  {
-    context: ENTREPRISE_API_TRACKING_CONTEXT,
-    object: "findEstablishmentBySiret",
-    recipient: ENTREPRISE_API_TRACKING_RECIPIENT,
-  },
-  () => ({
-    signal: AbortSignal.timeout(HTTP_CLIENT_TIMEOUT),
-  }),
-);
-
-export const findBySiren = findBySirenFactory(
-  entrepriseOpenApiClient,
-  {
-    context: ENTREPRISE_API_TRACKING_CONTEXT,
-    object: "findEstablishmentBySiren",
-    recipient: ENTREPRISE_API_TRACKING_RECIPIENT,
-  },
-  () => ({
-    signal: AbortSignal.timeout(HTTP_CLIENT_TIMEOUT),
-  }),
-);
-
-export const getOrganizationInfo = getOrganizationInfoFactory({
-  findBySiren,
-  findBySiret,
-});
-
-export const findMandatairesSociauxBySiren =
-  findMandatairesSociauxBySirenFactory(
+export const EntrepriseApiInfogreffeRepository = {
+  findMandatairesSociauxBySiren: findMandatairesSociauxBySirenFactory(
     entrepriseOpenApiClient,
     {
       context: ENTREPRISE_API_TRACKING_CONTEXT,
@@ -72,4 +43,49 @@ export const findMandatairesSociauxBySiren =
     () => ({
       signal: AbortSignal.timeout(HTTP_CLIENT_TIMEOUT),
     }),
-  );
+  ),
+};
+
+export const EntrepriseApiInseeRepository = {
+  findBySiren: findBySirenFactory(
+    entrepriseOpenApiClient,
+    {
+      context: ENTREPRISE_API_TRACKING_CONTEXT,
+      object: "findEstablishmentBySiren",
+      recipient: ENTREPRISE_API_TRACKING_RECIPIENT,
+    },
+    () => ({
+      signal: AbortSignal.timeout(HTTP_CLIENT_TIMEOUT),
+    }),
+  ),
+  findBySiret: findBySiretFactory(
+    entrepriseOpenApiClient,
+    {
+      context: ENTREPRISE_API_TRACKING_CONTEXT,
+      object: "findEstablishmentBySiret",
+      recipient: ENTREPRISE_API_TRACKING_RECIPIENT,
+    },
+    () => ({
+      signal: AbortSignal.timeout(HTTP_CLIENT_TIMEOUT),
+    }),
+  ),
+};
+
+export const InseeApiRepository = {
+  findBySiret: findBySiretFactory(
+    entrepriseOpenApiClient,
+    {
+      context: ENTREPRISE_API_TRACKING_CONTEXT,
+      object: "findEstablishmentBySiret",
+      recipient: ENTREPRISE_API_TRACKING_RECIPIENT,
+    },
+    () => ({
+      signal: AbortSignal.timeout(HTTP_CLIENT_TIMEOUT),
+    }),
+  ),
+};
+
+export const getOrganizationInfo = getOrganizationInfoFactory({
+  findBySiren: EntrepriseApiInseeRepository.findBySiren,
+  findBySiret: EntrepriseApiInseeRepository.findBySiret,
+});
