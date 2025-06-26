@@ -12,6 +12,7 @@ import { isEmpty } from "lodash-es";
 import { z, ZodError } from "zod";
 import {
   AccessRestrictedToPublicServiceEmailError,
+  DomainRestrictedError,
   UnableToAutoJoinOrganizationError,
   UserAlreadyAskedToJoinOrganizationError,
   UserInOrganizationAlreadyError,
@@ -30,6 +31,7 @@ import {
 } from "../managers/organization/main";
 import { getUserFromAuthenticatedSession } from "../managers/session/authenticated";
 import { csrfToken } from "../middlewares/csrf-protection";
+import { findEmailDomainsByOrganizationId } from "../repositories/email-domain";
 import {
   idSchema,
   oidcErrorSchema,
@@ -144,6 +146,12 @@ export const postJoinOrganizationMiddleware = async (
       return res.redirect(`/users/access-restricted-to-public-sector-email`);
     }
 
+    if (error instanceof DomainRestrictedError) {
+      return res.redirect(
+        `/users/domains-restricted-in-organization?organization_id=${error.organizationId}`,
+      );
+    }
+
     if (
       error instanceof InvalidSiretError ||
       error instanceof OrganizationNotActiveError ||
@@ -172,6 +180,40 @@ export const postJoinOrganizationMiddleware = async (
       );
     }
 
+    next(error);
+  }
+};
+
+export const getDomainsRestrictedInOrganizationController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const schema = z.object({
+      organization_id: idSchema(),
+    });
+
+    const { organization_id } = await schema.parseAsync(req.query);
+
+    const organization = await getOrganizationById(organization_id);
+    if (isEmpty(organization)) {
+      return next(new HttpErrors.NotFound());
+    }
+
+    const domains = await findEmailDomainsByOrganizationId(organization_id);
+    console.log({ domains });
+    if (domains.length <= 0) {
+      return next(new HttpErrors.NotFound());
+    }
+
+    return res.render("user/access-restricted-to-domains", {
+      pageTitle: "Domains restreintes dans l'organisation",
+      csrfToken: csrfToken(req),
+      organization_label: organization.cached_libelle,
+      organization_domains: domains.map(({ domain }) => domain).join(", "),
+    });
+  } catch (error) {
     next(error);
   }
 };

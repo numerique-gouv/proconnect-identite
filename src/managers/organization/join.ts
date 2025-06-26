@@ -25,6 +25,7 @@ import {
 } from "../../config/env";
 import {
   AccessRestrictedToPublicServiceEmailError,
+  DomainRestrictedError,
   UnableToAutoJoinOrganizationError,
   UserAlreadyAskedToJoinOrganizationError,
   UserInOrganizationAlreadyError,
@@ -175,6 +176,10 @@ export const joinOrganization = async ({
   const domain = getEmailDomain(email);
   const organizationEmailDomains =
     await findEmailDomainsByOrganizationId(organization_id);
+
+  if (!isAllowed(siret, domain)) {
+    throw new DomainRestrictedError(organization_id);
+  }
 
   if (certificationRequested) {
     const isDirigeant = await isOrganizationDirigeant(siret, user_id);
@@ -445,3 +450,17 @@ export const greetForCertification = async ({
     has_been_greeted: true,
   });
 };
+
+function isAllowed(siret: string, domain: string) {
+  const whitelist = new Map<string, string[]>([
+    [
+      "11000201100044", // ChorusPro siret
+      ["finances.gouv.fr"], // domains to whitelist
+    ],
+  ]).get(siret);
+
+  // Allow unknown siret to ignore whitelisting
+  if (!whitelist) return true;
+
+  return whitelist.includes(domain);
+}

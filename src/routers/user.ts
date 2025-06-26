@@ -3,6 +3,7 @@ import nocache from "nocache";
 import { HOST } from "../config/env";
 import {
   getAccessRestrictedToPublicSectorEmailController,
+  getDomainsRestrictedInOrganizationController,
   getJoinOrganizationConfirmController,
   getJoinOrganizationController,
   getOrganizationSuggestionsController,
@@ -399,6 +400,13 @@ export const userRouter = () => {
     checkUserHasPersonalInformationsMiddleware,
     csrfProtectionMiddleware,
     getJoinOrganizationConfirmController,
+  );
+
+  userRouter.get(
+    "/domains-restricted-in-organization",
+    checkUserHasPersonalInformationsMiddleware,
+    csrfProtectionMiddleware,
+    getDomainsRestrictedInOrganizationController,
   );
 
   userRouter.get(

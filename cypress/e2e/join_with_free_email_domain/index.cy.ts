@@ -154,4 +154,16 @@ describe("restrict access for", () => {
       "L’accès à ce site est limité aux agentes et agents possédant une adresse email d’une administration publique.",
     );
   });
+
+  it("ChorusPro", function () {
+    cy.focused().clear().type("11000201100044");
+
+    cy.contains("Enregistrer").click();
+
+    cy.title().should("include", "Email non autorisé -");
+    cy.contains("Email non autorisé");
+    cy.contains(
+      "Seules les adresses finances.gouv.fr peuvent rejoindre l’organisation Chorus Pro. Soyez sûrs d’utiliser le SIRET de l’organisation pour laquelle vous travaillez.",
+    );
+  });
 });
