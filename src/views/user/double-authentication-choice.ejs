@@ -82,6 +82,7 @@
   >
     <input type="hidden" name="_csrf" value="<%= csrfToken; %>" />
     <input type="hidden" name="webauthn_registration_response_string" />
+    <input type="hidden" name="2fa_force" />
     <button type="submit" class="fr-btn"></button>
   </form>
   <script type="module" src="<%= js('webauthn-registration.js') %>"></script>

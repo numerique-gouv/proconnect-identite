@@ -73,6 +73,15 @@ const registerPassKey = async () => {
   // POST the response to the endpoint that calls
   // @simplewebauthn/server -> verifyRegistrationResponse()
   registrationResponseStringInputElement.value = JSON.stringify(attResp);
+
+  const mfaProConnectConfig = document.getElementById("mfa-proconnect-config");
+  const force2FAInput = registrationResponseForm.querySelector(
+    'input[name="2fa_force"]',
+  );
+
+  force2FAInput.value =
+    mfaProConnectConfig && mfaProConnectConfig.checked ? "on" : "";
+
   registrationResponseForm.requestSubmit();
 };
 

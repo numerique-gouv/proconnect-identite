@@ -11,6 +11,7 @@ import {
   WebauthnAuthenticationFailedError,
   WebauthnRegistrationFailedError,
 } from "../config/errors";
+import { disableForce2fa, enableForce2fa } from "../managers/2fa";
 import {
   addAuthenticationMethodReferenceInSession,
   createAuthenticatedSession,
@@ -30,6 +31,7 @@ import {
   verifyRegistration,
 } from "../managers/webauthn";
 import { csrfToken } from "../middlewares/csrf-protection";
+import { optionalCheckboxSchema } from "../services/custom-zod-schemas";
 import getNotificationsFromRequest from "../services/get-notifications-from-request";
 import { logger } from "../services/log";
 
@@ -85,10 +87,12 @@ export const postVerifyRegistrationControllerFactory =
     try {
       const schema = z.object({
         webauthn_registration_response_string: z.string(),
+        "2fa_force": z.string().optional(),
       });
-      const { webauthn_registration_response_string } = await schema.parseAsync(
-        req.body,
-      );
+      const {
+        webauthn_registration_response_string,
+        "2fa_force": force2FAFromForm,
+      } = await schema.parseAsync(req.body);
 
       const registrationResponseJson = JSON.parse(
         webauthn_registration_response_string,
@@ -110,6 +114,13 @@ export const postVerifyRegistrationControllerFactory =
         addAuthenticationMethodReferenceInSession(req, res, updatedUser, "uv");
       }
       await sendActivateAccessKeyMail({ user_id });
+
+      const shouldEnableForce2FA =
+        optionalCheckboxSchema().safeParse(force2FAFromForm);
+
+      shouldEnableForce2FA
+        ? await enableForce2fa(user_id)
+        : await disableForce2fa(user_id);
 
       return res.redirect(redirectUrl);
     } catch (e) {
