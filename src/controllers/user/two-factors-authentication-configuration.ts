@@ -24,7 +24,7 @@ import { sendAddFreeTOTPEmail } from "../../managers/user";
 import { csrfToken } from "../../middlewares/csrf-protection";
 import {
   codeSchema,
-  optionalBooleanSchema,
+  optionalCheckboxSchema,
 } from "../../services/custom-zod-schemas";
 import getNotificationsFromRequest, {
   getNotificationLabelFromRequest,
@@ -53,7 +53,7 @@ export const getIsTotpAppInstalledController = async (
   next: NextFunction,
 ) => {
   try {
-    const schema = z.object({ "2fa_force": optionalBooleanSchema() });
+    const schema = z.object({ "2fa_force": optionalCheckboxSchema() });
 
     const { "2fa_force": temporaryForce2fa } = await schema.parseAsync(
       req.query,

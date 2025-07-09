@@ -49,7 +49,7 @@ export const optionalBooleanSchema = () =>
   z
     .string()
     .optional()
-    .transform((val) => val === "on" || val === "true");
+    .transform((val) => val === "true");
 
 export const notificationLabelSchema = () =>
   z.string().refine(isNotificationLabelValid).optional();
@@ -67,6 +67,12 @@ export const codeSchema = () =>
     .trim()
     .min(1)
     .transform((val) => val.replace(/\s+/g, ""));
+
+export const optionalCheckboxSchema = () =>
+  z
+    .string()
+    .optional()
+    .transform((val) => val === "on");
 
 export const oidcErrorSchema = () =>
   z.enum([
