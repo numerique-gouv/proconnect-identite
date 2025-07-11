@@ -86,7 +86,6 @@ describe("sign-in with a client requiring certification dirigeant", () => {
     cy.contains(
       "Email professionnel outdated-franceconnected+douglasduteil@mail.com",
     );
-    cy.contains("Rôle HyyyperProConnectDev4000");
     cy.contains("Organisation Douglas Duteil");
     cy.contains("Statut Compte certifié");
     cy.contains("Continuer").click();
@@ -119,7 +118,6 @@ describe("sign-in with a client requiring certification dirigeant", () => {
     cy.contains("Prénom Karima");
     cy.contains("Nom Aknine");
     cy.contains("Email professionnel karima.aknine@yopmail.com");
-    cy.contains("Rôle Grande cheffe de BATI-SEREIN");
     cy.contains("Organisation Bati-serein");
     cy.contains("Statut Compte certifié");
     cy.contains("Continuer").click();
@@ -151,7 +149,6 @@ describe("sign-in with a client requiring certification dirigeant", () => {
     cy.contains("Prénom Ulysse");
     cy.contains("Nom Tosi");
     cy.contains("Email professionnel ulysse.tosi@yopmail.com");
-    cy.contains("Rôle Grand chef de DANONE et PAPILLON");
     cy.contains("Organisation Papillon");
     cy.contains("Statut Compte certifié");
     cy.contains("Continuer").click();
@@ -184,7 +181,6 @@ describe("sign-in with a client requiring certification dirigeant", () => {
     cy.contains("Prénom Stevens");
     cy.contains("Nom Cheron");
     cy.contains("Email professionnel stevens.cheron@yopmail.com");
-    cy.contains("Rôle Grand chef de HERISSON et SURICATE");
     cy.contains("Organisation Suricate - The kilberry");
     cy.contains("Statut Compte certifié");
     cy.contains("Continuer").click();
@@ -304,15 +300,6 @@ describe("Signup with a client requiring certification dirigeant", () => {
 
     cy.title().should("include", "Déconnexion 🎭 FranceConnect 🎭");
 
-    cy.title().should("include", "Renseigner votre identité -");
-    cy.seeInField("Prénom", "Elia");
-    cy.seeInField("Nom", "Alvernhe");
-    cy.seeInField("Numéro de téléphone professionnel", "");
-    cy.seeInField("Profession ou rôle au sein de votre organisation", "");
-    cy.contains("Profession ou rôle au sein de votre organisation").click();
-    cy.focused().type("Dirigeante");
-    cy.contains("Valider").click();
-
     cy.title().should("include", "Rejoindre une organisation - ");
     cy.contains("SIRET de l’organisation que vous représentez").click();
     cy.focused().clear().type("49430870300052");
@@ -325,7 +312,6 @@ describe("Signup with a client requiring certification dirigeant", () => {
     cy.contains("Prénom Elia");
     cy.contains("Nom Alvernhe");
     cy.contains("Email professionnel elia.alvernhe@yopmail.com");
-    cy.contains("Rôle Dirigeante");
     cy.contains("Organisation Jeremie Cook");
     cy.contains("Statut Compte certifié");
     cy.contains("Continuer").click();
@@ -367,15 +353,6 @@ describe("Signup with a client requiring certification dirigeant", () => {
 
     cy.title().should("include", "Connexion 🎭 FranceConnect 🎭");
     cy.contains("Je suis Adrian Volckaert").click();
-
-    cy.title().should("include", "Renseigner votre identité -");
-    cy.seeInField("Prénom", "Adrian");
-    cy.seeInField("Nom", "Volckaert");
-    cy.seeInField("Numéro de téléphone professionnel", "");
-    cy.seeInField("Profession ou rôle au sein de votre organisation", "");
-    cy.contains("Profession ou rôle au sein de votre organisation").click();
-    cy.focused().type("Non dirigeant");
-    cy.contains("Valider").click();
 
     cy.title().should("include", "Rejoindre une organisation - ");
     cy.contains("SIRET de l’organisation que vous représentez").click();
@@ -424,15 +401,6 @@ describe("Signup with a client requiring certification dirigeant", () => {
 
     cy.title().should("include", "Déconnexion 🎭 FranceConnect 🎭");
 
-    cy.title().should("include", "Renseigner votre identité -");
-    cy.seeInField("Prénom", "Angela Claire Louise");
-    cy.seeInField("Nom", "DUBOIS");
-    cy.seeInField("Numéro de téléphone professionnel", "");
-    cy.seeInField("Profession ou rôle au sein de votre organisation", "");
-    cy.contains("Profession ou rôle au sein de votre organisation").click();
-    cy.focused().type("Dirigeante");
-    cy.contains("Valider").click();
-
     cy.title().should("include", "Rejoindre une organisation - ");
     cy.contains("SIRET de l’organisation que vous représentez").click();
     cy.focused().clear().type("83832482000011");
@@ -445,7 +413,6 @@ describe("Signup with a client requiring certification dirigeant", () => {
     cy.contains("Prénom Angela Claire Louise");
     cy.contains("Nom DUBOIS");
     cy.contains("Email professionnel wossewodda-3728@yopmail.com");
-    cy.contains("Rôle Dirigeante");
     cy.contains("Organisation Angela Gnesotto");
     cy.contains("Statut Compte certifié");
     cy.contains("Continuer").click();
