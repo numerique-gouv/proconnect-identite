@@ -11,7 +11,7 @@ $.verbose = true;
 //
 
 let testCase = argv._[0];
-const mode = argv["dev"] ? "development" : "single";
+const devMode = !!argv["dev"];
 const interactive = !process.env["CI"];
 
 const doesExist = await fs.exists(`cypress/e2e/${testCase}`);
@@ -54,11 +54,13 @@ if (interactive && (!testCase || !doesExist)) {
 
 //
 
-console.log(`🚥 Setup test "${testCase}" case in ${mode} mode`);
+console.log(
+  `🚥 Setup test "${testCase}" case in ${devMode ? "dev" : "standard"} mode`,
+);
 console.log();
 await $`npm run build:workspaces`;
 
-if (mode === "development") {
+if (devMode) {
   $`npx dotenvx run -f cypress/e2e/${testCase}/env.conf -- npm run dev`;
 } else {
   await $({ nothrow: true })`npm run delete-database`;
@@ -71,8 +73,8 @@ if (mode === "development") {
   console.log("Run the app with the specific env vars:");
 
   console.log(`
-  \t\`\`\`bash
-  \tnpx dotenvx run -f cypress/e2e/${testCase}/env.conf -- npm run dev
-  \t\`\`\`
+  \`\`\`bash
+  npx dotenvx run -f cypress/e2e/${testCase}/env.conf -- npm run dev
+  \`\`\`
   `);
 }
