@@ -33,50 +33,64 @@ import {
 export const entrepriseOpenApiClient: EntrepriseOpenApiClient =
   createEntrepriseOpenApiClient(ENTREPRISE_API_TOKEN, {
     baseUrl: ENTREPRISE_API_URL,
-    fetch:
-      DEPLOY_ENV === "localhost"
-        ? (input: Request) =>
-            Promise.resolve(TestingEntrepriseApiRouter.fetch(input))
-        : undefined,
   });
 
+export const entrepriseOpenApiTestClient: EntrepriseOpenApiClient =
+  createEntrepriseOpenApiClient(ENTREPRISE_API_TOKEN, {
+    fetch: (input: Request) =>
+      Promise.resolve(TestingEntrepriseApiRouter.fetch(input)),
+  });
+
+function getEntrepriseOpenApiClient(siren: string) {
+  if (siren === "🏛️") return entrepriseOpenApiTestClient;
+  return DEPLOY_ENV === "localhost"
+    ? entrepriseOpenApiTestClient
+    : entrepriseOpenApiClient;
+}
+
 export const EntrepriseApiInfogreffeRepository = {
-  findMandatairesSociauxBySiren: findMandatairesSociauxBySirenFactory(
-    entrepriseOpenApiClient,
-    {
-      context: ENTREPRISE_API_TRACKING_CONTEXT,
-      object: "findMandatairesSociauxBySiren",
-      recipient: ENTREPRISE_API_TRACKING_RECIPIENT,
-    },
-    () => ({
-      signal: AbortSignal.timeout(HTTP_CLIENT_TIMEOUT),
-    }),
-  ),
+  findMandatairesSociauxBySiren(siren: string) {
+    return findMandatairesSociauxBySirenFactory(
+      getEntrepriseOpenApiClient(siren),
+      {
+        context: ENTREPRISE_API_TRACKING_CONTEXT,
+        object: "findMandatairesSociauxBySiren",
+        recipient: ENTREPRISE_API_TRACKING_RECIPIENT,
+      },
+      () => ({
+        signal: AbortSignal.timeout(HTTP_CLIENT_TIMEOUT),
+      }),
+    )(siren);
+  },
 };
 
 export const EntrepriseApiInseeRepository = {
-  findBySiren: findBySirenFactory(
-    entrepriseOpenApiClient,
-    {
-      context: ENTREPRISE_API_TRACKING_CONTEXT,
-      object: "findEstablishmentBySiren",
-      recipient: ENTREPRISE_API_TRACKING_RECIPIENT,
-    },
-    () => ({
-      signal: AbortSignal.timeout(HTTP_CLIENT_TIMEOUT),
-    }),
-  ),
-  findBySiret: findBySiretFactory(
-    entrepriseOpenApiClient,
-    {
-      context: ENTREPRISE_API_TRACKING_CONTEXT,
-      object: "findEstablishmentBySiret",
-      recipient: ENTREPRISE_API_TRACKING_RECIPIENT,
-    },
-    () => ({
-      signal: AbortSignal.timeout(HTTP_CLIENT_TIMEOUT),
-    }),
-  ),
+  findBySiren(siren: string) {
+    return findBySirenFactory(
+      getEntrepriseOpenApiClient(siren),
+      {
+        context: ENTREPRISE_API_TRACKING_CONTEXT,
+        object: "findEstablishmentBySiren",
+        recipient: ENTREPRISE_API_TRACKING_RECIPIENT,
+      },
+      () => ({
+        signal: AbortSignal.timeout(HTTP_CLIENT_TIMEOUT),
+      }),
+    )(siren);
+  },
+  findBySiret(siret: string) {
+    return findBySiretFactory(
+      getEntrepriseOpenApiClient(siret.substring(0, 9)),
+      {
+        context: ENTREPRISE_API_TRACKING_CONTEXT,
+        object: "findEstablishmentBySiret",
+        recipient: ENTREPRISE_API_TRACKING_RECIPIENT,
+      },
+      () => ({
+        signal: AbortSignal.timeout(HTTP_CLIENT_TIMEOUT),
+      }),
+    )(siret);
+  },
 };
 
 const getInseeAccessToken =
